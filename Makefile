@@ -6,7 +6,7 @@
 #    By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/08/05 18:24:23 by lyanga            #+#    #+#              #
-#    Updated: 2026/08/07 16:07:04 by lyanga           ###   ########.fr        #
+#    Updated: 2026/08/07 20:48:34 by lyanga           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -16,7 +16,9 @@ SRCS_DIR	= srcs
 INCLUDES_DIR	= includes
 OBJS_DIR	= .objs
 
-SRCS		= $(SRCS_DIR)/main.c
+SRCS_FILES	=	main.c \
+				tokeniser.c
+SRCS		= $(addprefix $(SRCS_DIR)/, $(SRCS_FILES))
 
 OBJS		= $(SRCS:$(SRCS_DIR)/%.c=$(OBJS_DIR)/%.o)
 DEPS		= $(OBJS:.o=.d)
@@ -24,9 +26,6 @@ DEPS		= $(OBJS:.o=.d)
 CC		= cc
 CFLAGS		= -Wall -Wextra -Werror -std=gnu17 -MMD -MP -I$(INCLUDES_DIR)
 LDFLAGS		= -lreadline
-
-init:
-	git submodule update --init --remote --recursive
 
 all: $(NAME)
 
@@ -46,5 +45,8 @@ fclean: clean
 	rm -f $(NAME)
 
 re: fclean all
+
+init:
+	git submodule update --init --remote --recursive
 
 .PHONY: all clean fclean re init

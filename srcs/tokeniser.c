@@ -1,32 +1,31 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   42sh.h                                             :+:      :+:    :+:   */
+/*   tokeniser.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/08/05 05:51:07 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/07 20:44:20 by lyanga           ###   ########.fr       */
+/*   Created: 2026/08/07 20:39:41 by lyanga            #+#    #+#             */
+/*   Updated: 2026/08/08 00:56:01 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef FORTYTWOSH_H
-# define FORTYTWOSH_H
+#include "42sh.h"
+#include <stdio.h>
+#include <string.h>
 
-# include <stdio.h>
-# include <stdlib.h>
-# include <unistd.h>
-# include <string.h>
-# include <errno.h>
-# include <signal.h>
-# include <sys/types.h>
-# include <sys/wait.h>
-# include <fcntl.h>
-# include <readline/readline.h>
-# include <readline/history.h>
+void tokeniser(char *line)
+{
+	printf("Tokenising line: [%s]\n", line);
 
-int	main(int argc, char **argv, char **envp);
+	char *token;
+	char *delimiter = " \n";
+	token = strtok(line, delimiter);
+	while (token)
+    {
+        printf("[%s]", token);
+        token = strtok(NULL, delimiter);
+    }
+	printf("\n");
 
-void tokeniser(char *line);
-
-#endif
+}
