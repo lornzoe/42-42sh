@@ -6,7 +6,7 @@
 #    By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/08/05 18:24:23 by lyanga            #+#    #+#              #
-#    Updated: 2026/08/05 18:24:24 by lyanga           ###   ########.fr        #
+#    Updated: 2026/08/07 16:07:04 by lyanga           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -22,7 +22,7 @@ OBJS		= $(SRCS:$(SRCS_DIR)/%.c=$(OBJS_DIR)/%.o)
 DEPS		= $(OBJS:.o=.d)
 
 CC		= cc
-CFLAGS		= -Wall -Wextra -Werror -MMD -MP -I$(INCLUDES_DIR)
+CFLAGS		= -Wall -Wextra -Werror -std=gnu17 -MMD -MP -I$(INCLUDES_DIR)
 LDFLAGS		= -lreadline
 
 all: $(NAME)
