@@ -25,6 +25,9 @@ CC		= cc
 CFLAGS		= -Wall -Wextra -Werror -std=gnu17 -MMD -MP -I$(INCLUDES_DIR)
 LDFLAGS		= -lreadline
 
+init:
+	git submodule update --init --recursive
+
 all: $(NAME)
 
 $(NAME): $(OBJS)
@@ -44,4 +47,4 @@ fclean: clean
 
 re: fclean all
 
-.PHONY: all clean fclean re
+.PHONY: all clean fclean re init
