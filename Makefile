@@ -26,7 +26,7 @@ CFLAGS		= -Wall -Wextra -Werror -std=gnu17 -MMD -MP -I$(INCLUDES_DIR)
 LDFLAGS		= -lreadline
 
 init:
-	git submodule update --init --recursive
+	git submodule update --init --remote --recursive
 
 all: $(NAME)
 

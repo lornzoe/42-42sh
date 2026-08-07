@@ -1,3 +1,4 @@
 [submodule "libft"]
 	path = libft
 	url = https://github.com/lornzoe/42-libft.git
+	branch = master
