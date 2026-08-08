@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/05 05:51:07 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/08 18:20:20 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/09 01:58:09 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,11 +26,21 @@
 // #include <readline/readline.h>
 // #include <readline/history.h>
 
+#define QUOTING "|&;<>()$`\\\"' \t\n*?[]^-!#~=%{,}"
+
 typedef enum e_symbols
 {
 	SYMBOL_NONE = 0,
-	SYMBOL_END
-}	t_grammar;
+	// redirect < > >> << >& <&
+	SYMBOL_REDIRECT_IN,			// <
+	SYMBOL_REDIRECT_OUT_TRUNC,	// >
+	SYMBOL_REDIRECT_OUT_APPEND,	// >>
+	SYMBOL_REDIRECT_HEREDOC,	// <<
+	SYMBOL_REDIRECT_DUP_IN, 	// <&
+	SYMBOL_REDIRECT_DUP_OUT, 	// >&
+
+	SYMBOL_UNKNOWN,
+}	t_symbols;
 
 int	main(int argc, char **argv, char **envp);
 void tokeniser(char *line);
