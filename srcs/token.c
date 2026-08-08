@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/08 14:13:29 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/08 15:32:06 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/08 16:49:46 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -119,6 +119,26 @@ void free_token_chain(t_token *start)
 	}
 }
 
+void print_escaped_str(const char *str)
+{
+    if (!str)
+        return;
+    while (*str)
+    {
+        if (*str == '\n')
+            printf("\\n");
+        else if (*str == '\t')
+            printf("\\t");
+        else if (*str == '\r')
+            printf("\\r");
+        else if (*str == '\\')
+            printf("\\\\");
+        else
+            putchar(*str);
+        str++;
+    }
+}
+
 void print_token_chain(t_token *start)
 {
 	if (!start)
@@ -129,8 +149,9 @@ void print_token_chain(t_token *start)
 		current = current->prev;
 	while (current)
 	{
-		printf("[%s]", current->str);
-		current = current->next;
+		printf("[");
+        print_escaped_str(current->str); // Replaces printf("[%s]", current->str);
+        printf("]");		current = current->next;
 	}
 	printf("\n");
 }

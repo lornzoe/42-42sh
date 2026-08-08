@@ -6,11 +6,16 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/05 05:50:58 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/08 00:51:16 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/08 16:39:13 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "42sh.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <readline/readline.h>
+#include <readline/history.h>
 
 int	main(int argc, char **argv, char **envp)
 {

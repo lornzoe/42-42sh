@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/07 20:39:41 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/08 16:21:59 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/08 16:37:10 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,7 @@
 #include <stdio.h>
 #include <string.h>
 
-static t_token *decompose_line(char *line, const char delim)
+static t_token *split_line(char *line, const char delim)
 {
 	t_token *chain;
 	char 	*str;
@@ -56,7 +56,7 @@ static t_token *decompose_chain(t_token *start, const char delim)
 void tokeniser(char *line)
 {
 	t_token *chain;
-	chain = decompose_line(line, ' ');
+	chain = split_line(line, ' ');
 	chain = decompose_chain(chain, '\n');
 	print_token_chain(chain);
 }
