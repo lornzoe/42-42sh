@@ -67,8 +67,10 @@ init:
 	cd $(REFS_DIR) && apt-get download yash dash
 	dpkg-deb -x $(REFS_DIR)/yash_*.deb $(REFS_DIR)/yash
 	dpkg-deb -x $(REFS_DIR)/dash_*.deb $(REFS_DIR)/dash
-	cp $(REFS_DIR)/yash/usr/bin/yash yash-reference
-	cp $(REFS_DIR)/dash/bin/dash dash-reference
+	test -f $(REFS_DIR)/yash/usr/bin/yash && cp $(REFS_DIR)/yash/usr/bin/yash yash-reference \
+		|| cp $(REFS_DIR)/yash/bin/yash yash-reference
+	test -f $(REFS_DIR)/dash/bin/dash && cp $(REFS_DIR)/dash/bin/dash dash-reference \
+		|| cp $(REFS_DIR)/dash/usr/bin/dash dash-reference
 	rm -rf $(REFS_DIR)
 
 .PHONY: all clean fclean re init
