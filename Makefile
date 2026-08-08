@@ -6,7 +6,7 @@
 #    By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/08/05 18:24:23 by lyanga            #+#    #+#              #
-#    Updated: 2026/08/08 15:37:00 by lyanga           ###   ########.fr        #
+#    Updated: 2026/08/08 18:18:01 by lyanga           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -57,7 +57,18 @@ fclean: clean
 
 re: fclean all
 
+# init script to download reference shells and extract them for testing
+REFS_DIR	= .refs
+
 init:
 	git submodule update --init --remote --recursive
+	rm -rf $(REFS_DIR)
+	mkdir -p $(REFS_DIR)
+	cd $(REFS_DIR) && apt-get download yash dash
+	dpkg-deb -x $(REFS_DIR)/yash_*.deb $(REFS_DIR)/yash
+	dpkg-deb -x $(REFS_DIR)/dash_*.deb $(REFS_DIR)/dash
+	cp $(REFS_DIR)/yash/usr/bin/yash yash-reference
+	cp $(REFS_DIR)/dash/bin/dash dash-reference
+	rm -rf $(REFS_DIR)
 
 .PHONY: all clean fclean re init
