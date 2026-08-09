@@ -6,11 +6,13 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/08 14:13:29 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/08 16:49:46 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/10 05:26:18 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "token.h"
+#include "log.h"
+#include "libft.h"
 #include "libft_ext.h"
 
 #include <stdio.h>
@@ -44,40 +46,35 @@ char *get_token_str(t_token *token)
 
 t_token *split_token(t_token *token, const char c)
 {
-	char *str = get_token_str(token);
-
-	// first find where the delim is at
-	size_t delim_index = 0;
-	while (str[delim_index] && str[delim_index] != c)
-		delim_index++;
-
-	// build string buffers before, for the delim, and after the delim
-	t_strbuf *before = ft_sb_new();
-	t_strbuf *delim = ft_sb_new();
-	t_strbuf *after = ft_sb_new();
-	if (!before || !delim || !after)
-		return NULL;
-
-	if (delim_index > 0
-		&& !ft_sb_appendn(before, str, delim_index))
-		return NULL;
-	if (!ft_sb_appendc(delim, c))
-		return NULL;
-	if (!ft_sb_append(after, str + delim_index + 1))
-		return NULL;
-
-	// build the tokens (before/after are omitted if empty)
+	char *str;
+	char *delim_pos;
+	char *before;
+	char *delim;
 	t_token *chain_start;
 	t_token *chain_end;
 	t_token *node;
 
-	chain_start = add_token(ft_sb_finish(before), NULL);
+	str = get_token_str(token);
+	delim_pos = strchr(str, c);
+	before = ft_substr(str, 0, delim_pos - str);
+	delim = ft_substr(str, delim_pos - str, 1);
+	if (!before || !delim)
+	{
+		free(before);
+		free(delim);
+		return NULL;
+	}
+
+	// build the tokens (before/after are omitted if empty)
+	chain_start = add_token(before, NULL);
+	free(before);
 	chain_end = chain_start;
-	node = add_token(ft_sb_finish(delim), chain_end);
+	node = add_token(delim, chain_end);
+	free(delim);
 	if (!chain_start)
 		chain_start = node;
 	chain_end = node;
-	node = add_token(ft_sb_finish(after), chain_end);
+	node = add_token(delim_pos + 1, chain_end);
 	if (node)
 		chain_end = node;
 
@@ -159,4 +156,27 @@ void print_token_chain(t_token *start)
         printf("]");		current = current->next;
 	}
 	printf("\n");
+}
+
+void merge_tokens(t_token *first, t_token *second)
+{
+	if (!first || !second)
+		return;
+
+	size_t new_len = strlen(first->str) + strlen(second->str);
+	char *new_str = malloc(new_len + 1);
+	if (!new_str)
+	{
+		LOG_ERROR("merge_tokens(): failed to allocate memory for merged token");
+		return;
+	}
+	strcpy(new_str, first->str);
+	strcat(new_str, second->str);
+	free(first->str);
+	first->str = new_str;
+
+	first->next = second->next;
+	if (second->next)
+		second->next->prev = first;
+	free_token(second);
 }
