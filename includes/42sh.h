@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/05 05:51:07 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/09 18:29:13 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/10 04:52:45 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,12 +26,8 @@
 // #include <readline/readline.h>
 // #include <readline/history.h>
 
-#ifdef DEBUG
-#	include <stdio.h>
-#	define DEBUG_PRINTF(...) printf("\033[1;32m[DEBUG]\033[0m\t"); printf(__VA_ARGS__);
-#else
-#	define DEBUG_PRINTF(...)
-#endif
+#include "log.h"
+#include "token.h"
 
 #define SHELL_SPECIAL_CHARS "|&;<>()$`\\\"' \t\n*?[]^-!#~=%{,}@"
 
@@ -60,6 +56,6 @@ typedef enum e_tokentype
 }	t_tokentype;
 
 int	main(int argc, char **argv, char **envp);
-void tokeniser(char *line);
+t_token *tokeniser(char *line);
 
 #endif

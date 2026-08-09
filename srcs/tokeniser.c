@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/07 20:39:41 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/09 18:32:33 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/10 04:53:25 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,10 +28,12 @@ static t_token *decompose_chain(t_token *start, const char delim)
 		last = current;
 		while (strchr(current->str, delim) && strlen(current->str) > 1)
 		{
-			DEBUG_PRINTF("decompose_chain(): splitting [%s]\n", current->str)
+			LOG_TRACE("decompose_chain(): splitting [%s]\n", current->str);
 			current = split_token(current, delim);
-			if (!current)
+			if (!current) {
+				LOG_WARN("decompose_chain(): split_token() returned NULL.\n");
 				return NULL;
+			}
 			last = current;
 		}
 		current = current->next;
@@ -41,11 +43,12 @@ static t_token *decompose_chain(t_token *start, const char delim)
 	return last;
 }
 
-void tokeniser(char *line)
+t_token *tokeniser(char *line)
 {
 	t_token		*chain;
 	const char	*special;
 
+	LOG_INFO("tokeniser()\n");
 	chain = add_token(line, NULL);
 	special = SHELL_SPECIAL_CHARS;
 	while (*special)
@@ -53,6 +56,7 @@ void tokeniser(char *line)
 		chain = decompose_chain(chain, *special);
 		special++;
 	}
-	print_token_chain(chain);
+	LOG_DEBUG_CALL(print_token_chain(chain));
+	return chain;
 }
 
