@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/08 14:13:29 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/10 05:26:18 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/10 06:38:19 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,6 +30,7 @@ t_token *add_token(const char *str, t_token *end)
 	if (!token)
 		return NULL;
 	token->str = strdup(str);
+	token->type = TOKEN_UNKNOWN;
 	token->prev = end;
 	token->next = NULL;
 	if (end)
@@ -158,25 +159,29 @@ void print_token_chain(t_token *start)
 	printf("\n");
 }
 
-void merge_tokens(t_token *first, t_token *second)
+t_token *merge_tokens(t_token *first, t_token *second)
 {
-	if (!first || !second)
-		return;
+	char *new_str;
 
-	size_t new_len = strlen(first->str) + strlen(second->str);
-	char *new_str = malloc(new_len + 1);
+	if (!first || !second)
+		return NULL;
+
+	new_str = ft_strjoin(first->str, second->str);
 	if (!new_str)
 	{
-		LOG_ERROR("merge_tokens(): failed to allocate memory for merged token");
-		return;
+		LOG_ERROR("merge_tokens(): failed malloc for merged token\n");
+		return NULL;
 	}
-	strcpy(new_str, first->str);
-	strcat(new_str, second->str);
 	free(first->str);
 	first->str = new_str;
 
 	first->next = second->next;
 	if (second->next)
 		second->next->prev = first;
+
+	second->prev = NULL;
+	second->next = NULL;
 	free_token(second);
+
+	return first;
 }

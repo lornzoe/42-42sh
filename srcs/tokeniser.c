@@ -6,14 +6,16 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/07 20:39:41 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/10 05:32:44 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/10 06:38:40 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "42sh.h"
 #include "token.h"
+#include "libft.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static t_token *decompose_chain(t_token *start, const char delim)
@@ -43,6 +45,110 @@ static t_token *decompose_chain(t_token *start, const char delim)
 	return last;
 }
 
+static t_token *merge_operator_at(t_token *op)
+{
+	char *joined;
+
+	while (op->next)
+	{
+		joined = ft_strjoin(op->str, op->next->str);
+		if (!joined)
+		{
+			LOG_ERROR("merge_operator_at(): allocation failed.\n");
+			return NULL;
+		}
+		if (operator_type(joined) == TOKEN_UNKNOWN)
+		{
+			free(joined);
+			break;
+		}
+		free(joined);
+		LOG_TRACE("merge_operator_at(): merging [%s] + [%s]\n", op->str, op->next->str);
+		if (!merge_tokens(op, op->next))
+			return NULL;
+	}
+	//op->type = operator_type(op->str); // add this in later
+	return op;
+}
+
+// just putting everything that is defined in posix
+static const struct {
+	const char	*str;
+	t_tokentype	type;
+}	g_operators[] = {
+	// control operators
+	{"&", TOKEN_BACKGROUND},
+	{"&&", TOKEN_LOGICAL_AND},
+	{"(", TOKEN_SUBSHELL_OPEN},
+	{")", TOKEN_SUBSHELL_CLOSE},
+	{";", TOKEN_SEPARATOR},
+	{";;", TOKEN_CASE_END},
+	{"\n", TOKEN_NEWLINE},
+	{"|", TOKEN_PIPE},
+	{"||", TOKEN_LOGICAL_OR},
+	// redirect operators
+	{"<", TOKEN_REDIRECT_IN},
+	{">", TOKEN_REDIRECT_OUT_TRUNC},
+	{">>", TOKEN_REDIRECT_OUT_APPEND},
+	{">|", TOKEN_REDIRECT_OUT_CLOBBER},
+	{"<&", TOKEN_REDIRECT_DUP_IN},
+	{">&", TOKEN_REDIRECT_DUP_OUT},
+	{"<<", TOKEN_REDIRECT_HEREDOC},
+	{"<<-", TOKEN_REDIRECT_HEREDOC_STRIP},
+	{"<>", TOKEN_REDIRECT_RDWR},
+	{NULL, TOKEN_UNKNOWN}
+};
+
+t_tokentype	operator_type(const char *str)
+{
+	size_t	i;
+
+	if (!str)
+		return (TOKEN_UNKNOWN);
+	i = 0;
+	while (g_operators[i].str)
+	{
+		if (strcmp(g_operators[i].str, str) == 0)
+			return (g_operators[i].type);
+		i++;
+	}
+	return (TOKEN_UNKNOWN);
+}
+
+// basically combine operators
+static t_token *merge_operators(t_token *chain)
+{
+	t_token *current = chain;
+
+	while (current)
+	{
+		if (operator_type(current->str) != TOKEN_UNKNOWN
+			&& !merge_operator_at(current))
+			return NULL;
+		current = current->next;
+	}
+	return chain;
+}
+
+// just to combine '$' and '{' only.
+static t_token *merge_params(t_token *chain)
+{
+	t_token *current = chain;
+
+	while (current)
+	{
+		if (current->next && strcmp(current->str, "$") == 0
+			&& strcmp(current->next->str, "{") == 0)
+		{
+			LOG_TRACE("merge_params(): merging [$] + [{]\n");
+			if (!merge_tokens(current, current->next))
+				return NULL;
+		}
+		current = current->next;
+	}
+	return chain;
+}
+
 t_token *tokeniser(char *line)
 {
 	t_token		*chain;
@@ -58,9 +164,9 @@ t_token *tokeniser(char *line)
 	}
 	LOG_DEBUG_CALL(print_token_chain(chain));
 
-	// TO-DO: combine symbols together where possible so that they are intrepretable later as operators/special words/etc.
-	{
-	}
+	// combine symbols together where possible so that they are intrepretable later as operators/special words/etc.
+	chain = merge_operators(chain);
+	chain = merge_params(chain);
 
 	LOG_DEBUG_CALL(print_token_chain(chain));
 	return chain;
