@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/05 05:51:07 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/09 01:58:09 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/09 18:02:30 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,21 +26,31 @@
 // #include <readline/readline.h>
 // #include <readline/history.h>
 
-#define QUOTING "|&;<>()$`\\\"' \t\n*?[]^-!#~=%{,}"
+#define SHELL_SPECIAL_CHARS "|&;<>()$`\\\"' \t\n*?[]^-!#~=%{,}@"
 
-typedef enum e_symbols
+typedef enum e_tokentype
 {
-	SYMBOL_NONE = 0,
+	TOKEN_UNKNOWN = 0,
 	// redirect < > >> << >& <&
-	SYMBOL_REDIRECT_IN,			// <
-	SYMBOL_REDIRECT_OUT_TRUNC,	// >
-	SYMBOL_REDIRECT_OUT_APPEND,	// >>
-	SYMBOL_REDIRECT_HEREDOC,	// <<
-	SYMBOL_REDIRECT_DUP_IN, 	// <&
-	SYMBOL_REDIRECT_DUP_OUT, 	// >&
+	TOKEN_REDIRECT_IN,			// <
+	TOKEN_REDIRECT_OUT_TRUNC,	// >
+	TOKEN_REDIRECT_OUT_APPEND,	// >>
+	TOKEN_REDIRECT_HEREDOC,		// <<
+	TOKEN_REDIRECT_DUP_IN, 		// <&
+	TOKEN_REDIRECT_DUP_OUT, 	// >&
+	// pipe|
+	TOKEN_PIPE,					// |
+	// seperator ;
+	TOKEN_SEPERATOR,			// ;
+	// logical operators || &&
+	TOKEN_LOGICAL_AND,			// &&
+	TOKEN_LOGICAL_OR,			// ||
+	// simple parameter expansion ${}
+	TOKEN_PARAM_EXPAND_OPEN,	// ${
+	TOKEN_PARAM_EXPAND_CLOSE,	// }
 
-	SYMBOL_UNKNOWN,
-}	t_symbols;
+	TOKEN_WORD,					// any other word
+}	t_tokentype;
 
 int	main(int argc, char **argv, char **envp);
 void tokeniser(char *line);
