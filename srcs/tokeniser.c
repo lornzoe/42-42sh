@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/07 20:39:41 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/09 18:04:56 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/09 18:32:33 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,8 +26,9 @@ static t_token *decompose_chain(t_token *start, const char delim)
 	while (current)
 	{
 		last = current;
-		if (strchr(current->str, delim))
+		while (strchr(current->str, delim) && strlen(current->str) > 1)
 		{
+			DEBUG_PRINTF("decompose_chain(): splitting [%s]\n", current->str)
 			current = split_token(current, delim);
 			if (!current)
 				return NULL;

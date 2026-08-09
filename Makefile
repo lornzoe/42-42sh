@@ -35,6 +35,14 @@ LDFLAGS		= -lreadline
 
 all: $(NAME)
 
+debug: CFLAGS += -DDEBUG -g
+debug: fclean_self $(LIBFT) $(OBJS)
+	$(CC) $(OBJS) $(LIBFT) $(LDFLAGS) -o $(NAME)
+
+fclean_self:
+	rm -rf $(OBJS_DIR)
+	rm -f $(NAME)
+
 $(NAME): $(LIBFT) $(OBJS)
 	$(CC) $(OBJS) $(LIBFT) $(LDFLAGS) -o $(NAME)
 
@@ -73,4 +81,4 @@ init:
 		|| cp $(REFS_DIR)/dash/usr/bin/dash dash-reference
 	rm -rf $(REFS_DIR)
 
-.PHONY: all clean fclean re init
+.PHONY: all clean fclean re init debug fclean_self

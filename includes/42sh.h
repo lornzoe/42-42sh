@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/05 05:51:07 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/09 18:02:30 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/09 18:29:13 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,6 +25,13 @@
 // #include <fcntl.h>
 // #include <readline/readline.h>
 // #include <readline/history.h>
+
+#ifdef DEBUG
+#	include <stdio.h>
+#	define DEBUG_PRINTF(...) printf("\033[1;32m[DEBUG]\033[0m\t"); printf(__VA_ARGS__);
+#else
+#	define DEBUG_PRINTF(...)
+#endif
 
 #define SHELL_SPECIAL_CHARS "|&;<>()$`\\\"' \t\n*?[]^-!#~=%{,}@"
 
