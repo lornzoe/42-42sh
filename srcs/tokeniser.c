@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/07 20:39:41 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/10 04:53:25 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/10 05:32:44 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,7 +31,7 @@ static t_token *decompose_chain(t_token *start, const char delim)
 			LOG_TRACE("decompose_chain(): splitting [%s]\n", current->str);
 			current = split_token(current, delim);
 			if (!current) {
-				LOG_WARN("decompose_chain(): split_token() returned NULL.\n");
+				LOG_ERROR("decompose_chain(): split_token() returned NULL.\n");
 				return NULL;
 			}
 			last = current;
@@ -56,6 +56,12 @@ t_token *tokeniser(char *line)
 		chain = decompose_chain(chain, *special);
 		special++;
 	}
+	LOG_DEBUG_CALL(print_token_chain(chain));
+
+	// TO-DO: combine symbols together where possible so that they are intrepretable later as operators/special words/etc.
+	{
+	}
+
 	LOG_DEBUG_CALL(print_token_chain(chain));
 	return chain;
 }
