@@ -42,7 +42,7 @@ char *get_token_str(t_token *token)
 	return NULL;
 }
 
-int split_token(t_token *token, const char c)
+t_token *split_token(t_token *token, const char c)
 {
 	char *str = get_token_str(token);
 
@@ -56,29 +56,32 @@ int split_token(t_token *token, const char c)
 	t_strbuf *delim = ft_sb_new();
 	t_strbuf *after = ft_sb_new();
 	if (!before || !delim || !after)
-		return 0;
+		return NULL;
 
-	if (delim_index > 0 
+	if (delim_index > 0
 		&& !ft_sb_appendn(before, str, delim_index))
-		return 0;
+		return NULL;
 	if (!ft_sb_appendc(delim, c))
-		return 0;
-	if (!ft_sb_append(after, str + delim_index))
-		return 0;
+		return NULL;
+	if (!ft_sb_append(after, str + delim_index + 1))
+		return NULL;
 
-	// build the tokens
-	t_token *chain;
+	// build the tokens (before/after are omitted if empty)
+	t_token *chain_start;
+	t_token *chain_end;
+	t_token *node;
 
-	chain = add_token(ft_sb_finish(before), NULL);
-	chain = add_token(ft_sb_finish(delim), chain);
-	chain = add_token(ft_sb_finish(after), chain);
+	chain_start = add_token(ft_sb_finish(before), NULL);
+	chain_end = chain_start;
+	node = add_token(ft_sb_finish(delim), chain_end);
+	if (!chain_start)
+		chain_start = node;
+	chain_end = node;
+	node = add_token(ft_sb_finish(after), chain_end);
+	if (node)
+		chain_end = node;
 
 	// attach them to the current chain
-	t_token *chain_end = chain;
-	while (chain->prev)
-		chain = chain->prev;
-	t_token *chain_start = chain;
-
 	if (token->prev)
 		token->prev->next = chain_start;
 	chain_start->prev = token->prev;
@@ -86,10 +89,12 @@ int split_token(t_token *token, const char c)
 		token->next->prev = chain_end;
 	chain_end->next = token->next;
 
-	// destroy token
+	// destroy token (unlink first so free_token doesn't touch the new chain)
+	token->prev = NULL;
+	token->next = NULL;
 	free_token(token);
 
-	return 1;
+	return chain_end;
 }
 
 void free_token(t_token *token)

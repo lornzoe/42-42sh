@@ -23,7 +23,7 @@ typedef struct s_token
 t_token *add_token(const char *str, t_token *end);
 
 char	*get_token_str(t_token *token);
-int		split_token(t_token *token, const char delim);
+t_token	*split_token(t_token *token, const char delim);
 void	free_token(t_token *end);
 void	free_token_chain(t_token *start);
 

@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/07 20:39:41 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/08 16:37:10 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/09 18:04:56 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,48 +16,42 @@
 #include <stdio.h>
 #include <string.h>
 
-static t_token *split_line(char *line, const char delim)
-{
-	t_token *chain;
-	char 	*str;
-	char	delim_str[2] = {delim, '\0'};
-	
-	str = strtok(line, delim_str);
-	chain = add_token(str, NULL);
-	while (str)
-	{
-		str = strtok(NULL, delim_str);
-		if (str != NULL)
-			chain = add_token(str, chain);
-	}
-	while (chain->prev)
-		chain = chain->prev;
-	return chain;
-}
-
 static t_token *decompose_chain(t_token *start, const char delim)
 {
 	t_token *current = start;
+	t_token *last = start;
 
+	if (!start)
+		return NULL;
 	while (current)
 	{
+		last = current;
 		if (strchr(current->str, delim))
 		{
-			if (!split_token(current, delim))
+			current = split_token(current, delim);
+			if (!current)
 				return NULL;
+			last = current;
 		}
 		current = current->next;
 	}
-	while (start->prev)
-		start = start->prev;
-	return start;
+	while (last->prev)
+		last = last->prev;
+	return last;
 }
 
 void tokeniser(char *line)
 {
-	t_token *chain;
-	chain = split_line(line, ' ');
-	chain = decompose_chain(chain, '\n');
+	t_token		*chain;
+	const char	*special;
+
+	chain = add_token(line, NULL);
+	special = SHELL_SPECIAL_CHARS;
+	while (*special)
+	{
+		chain = decompose_chain(chain, *special);
+		special++;
+	}
 	print_token_chain(chain);
 }
 
