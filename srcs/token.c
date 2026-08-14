@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/08 14:13:29 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/10 06:38:19 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/15 02:29:39 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -157,6 +157,58 @@ void print_token_chain(t_token *start)
         printf("]");		current = current->next;
 	}
 	printf("\n");
+}
+
+t_token *get_first_token(t_token *chain)
+{
+    if (!chain)
+        return NULL;
+    while (chain->prev)
+        chain = chain->prev;
+    return chain;
+}
+
+t_token *get_last_token(t_token *chain)
+{
+	if (!chain)
+		return NULL;
+	while (chain->next)
+		chain = chain->next;
+	return chain;
+}
+
+// for space/tabs only, not all whitespace
+int	is_space_token(t_token *token)
+{
+	char	*str;
+
+	if (!token || !token->str)
+		return (0);
+	str = token->str;
+	while (*str)
+	{
+		if (*str != ' ' && *str != '\t')
+			return (0);
+		str++;
+	}
+	return (1);
+}
+
+// for whitespace
+int	is_blank_token(t_token *token)
+{
+	char	*str;
+
+	if (!token || !token->str)
+		return (0);
+	str = token->str;
+	while (*str)
+	{
+		if (!ft_isspace((unsigned char)*str))
+			return (0);
+		str++;
+	}
+	return (1);
 }
 
 t_token *merge_tokens(t_token *first, t_token *second)

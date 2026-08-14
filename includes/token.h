@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/08 14:06:07 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/10 21:37:39 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/15 02:17:36 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,5 +69,11 @@ t_tokentype	operator_type(const char *str);
 
 void	print_escaped_str(const char *str);
 void	print_token_chain(t_token *start);
+
+t_token *get_first_token(t_token *chain);
+t_token *get_last_token(t_token *chain);
+
+int		is_space_token(t_token *token);
+int		is_blank_token(t_token *token);
 
 #endif
