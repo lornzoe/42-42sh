@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/07 20:39:41 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/10 06:38:40 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/14 05:52:57 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -130,10 +130,11 @@ static t_token *merge_operators(t_token *chain)
 	return chain;
 }
 
-// just to combine '$' and '{' only.
+// combine $ and { (${) then keep absorbing tokens till } (include it ).
 static t_token *merge_params(t_token *chain)
 {
 	t_token *current = chain;
+	int		is_close;
 
 	while (current)
 	{
@@ -143,6 +144,50 @@ static t_token *merge_params(t_token *chain)
 			LOG_TRACE("merge_params(): merging [$] + [{]\n");
 			if (!merge_tokens(current, current->next))
 				return NULL;
+			while (current->next)
+			{
+				is_close = (strcmp(current->next->str, "}") == 0);
+				LOG_TRACE("merge_params(): merging [%s] + [%s]\n",
+					current->str, current->next->str);
+				if (!merge_tokens(current, current->next))
+					return NULL;
+				if (is_close)
+					break;
+			}
+		}
+		current = current->next;
+	}
+	return chain;
+}
+
+static t_token *merge_quotes(t_token *chain)
+{
+	t_token *current = chain;
+	char	quote[2];
+	int		is_close;
+
+	quote[1] = '\0';
+	while (current)
+	{
+		if (strcmp(current->str, "\"") == 0 || strcmp(current->str, "\'") == 0)
+		{
+			quote[0] = current->str[0];
+			LOG_TRACE("merge_quotes(): starting at %s\n", current->str);
+			while (current->next)
+			{
+				is_close = (strcmp(current->next->str, quote) == 0);
+				LOG_TRACE("merge_quotes(): merging [%s] + [%s]\n",
+					current->str, current->next->str);
+				if (!merge_tokens(current, current->next))
+					return NULL;
+				if (is_close)
+					break;
+				if (!is_close && current->next == NULL)
+				{
+					LOG_WARN("merge_quotes(): end of chain reached, quotation of [%s] was not closed.\n", quote);
+					return NULL;
+				}
+			}
 		}
 		current = current->next;
 	}
@@ -165,9 +210,13 @@ t_token *tokeniser(char *line)
 	LOG_DEBUG_CALL(print_token_chain(chain));
 
 	// combine symbols together where possible so that they are intrepretable later as operators/special words/etc.
-	chain = merge_operators(chain);
-	chain = merge_params(chain);
-
+	if (!merge_operators(chain))
+		return NULL;
+	if (!merge_params(chain))
+		return NULL;
+	if (!merge_quotes(chain))
+		return NULL;
+	
 	LOG_DEBUG_CALL(print_token_chain(chain));
 	return chain;
 }

@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/08 14:06:07 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/10 06:41:36 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/10 21:37:39 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,9 @@
 typedef enum e_tokentype
 {
 	TOKEN_UNKNOWN = 0,
+	TOKEN_WORD,
+
+	TOKEN_OPERATOR, 				// all values after this are only
 	// redirect < > >> >| <& >& << <<- <>
 	TOKEN_REDIRECT_IN,				// <
 	TOKEN_REDIRECT_OUT_TRUNC,		// >
@@ -43,13 +46,7 @@ typedef enum e_tokentype
 	TOKEN_SUBSHELL_CLOSE,			// )
 	// structural
 	TOKEN_NEWLINE,					// \n
-	// simple parameter expansion ${}
-	// (not operators: POSIX makes a $-expansion part of the enclosing word)
-	TOKEN_PARAM_EXPAND_OPEN,		// ${
-	TOKEN_PARAM_EXPAND_CLOSE,		// }
 
-	TOKEN_SPACE,					// space or tab	
-	TOKEN_WORD,						// any other word
 }	t_tokentype;
 
 typedef struct s_token
