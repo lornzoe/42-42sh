@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/08 14:13:29 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/15 02:50:26 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/15 03:11:58 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,7 +30,6 @@ t_token *add_token(const char *str, t_token *end)
 	if (!token)
 		return NULL;
 	token->str = strdup(str);
-	token->type = TOKEN_UNKNOWN;
 	token->prev = end;
 	token->next = NULL;
 	if (end)
@@ -226,6 +225,22 @@ int	is_blank_token(t_token *token)
 	while (*str)
 	{
 		if (!ft_isspace((unsigned char)*str))
+			return (0);
+		str++;
+	}
+	return (1);
+}
+
+int is_newline_token(t_token *token)
+{
+    char	*str;
+
+	if (!token || !token->str)
+		return (0);
+	str = token->str;
+	while (*str)
+	{
+		if (*str != '\n')
 			return (0);
 		str++;
 	}

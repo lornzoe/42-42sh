@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/08 14:06:07 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/15 02:17:36 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/15 03:11:47 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,7 +52,7 @@ typedef enum e_tokentype
 typedef struct s_token
 {
 	char 	*str;
-	t_tokentype	type;
+
 	struct  s_token *prev;
 	struct	s_token *next;
 }	t_token;
@@ -77,5 +77,6 @@ t_token *get_last_token(t_token *chain);
 
 int		is_space_token(t_token *token);
 int		is_blank_token(t_token *token);
+int		is_newline_token(t_token *token);
 
 #endif
