@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/08 14:13:29 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/15 02:29:39 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/15 02:50:26 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,6 +43,22 @@ char *get_token_str(t_token *token)
 	if (token)
 		return token->str;
 	return NULL;
+}
+
+int	token_strcmp(t_token *token, const char *str)
+{
+	char	*token_str;
+
+	token_str = get_token_str(token);
+	if (!token_str || !str)
+	{
+		if (token_str == str)
+			return (0);
+		if (!token_str)
+			return (-1);
+		return (1);
+	}
+	return (strcmp(token_str, str));
 }
 
 t_token *split_token(t_token *token, const char c)
