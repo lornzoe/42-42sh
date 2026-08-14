@@ -229,29 +229,6 @@ static t_token *merge_quotes(t_token *chain)
 	return chain;
 }
 
-static t_token *merge_linebreaks(t_token *chain)
-{
-	t_token *current = chain;
-
-	while (current)
-	{
-		if (strcmp(current->str, "\n") == 0)
-		{
-			LOG_TRACE("merge_linebreaks(): starting at %s\n", current->str);
-			while (current->next
-				&& (strcmp(current->next->str, "\n") == 0 || strcmp(current->next->str, " ") == 0))
-			{
-				LOG_TRACE("merge_linebreaks(): merging [%s] + [%s]\n",
-					current->str, current->next->str);
-				if (!merge_tokens(current, current->next))
-					return NULL;
-			}
-		}
-		current = current->next;
-	}
-	return chain;
-}
-
 static t_token *merge_spaces(t_token *chain)
 {
 	t_token *current = chain;
@@ -313,8 +290,7 @@ t_token *tokeniser(char *line)
 		return NULL;
 	if (!merge_quotes(chain))
 		return NULL;
-	if (!merge_linebreaks(chain))
-		return NULL;
+	// newlines stay one token per '\n': grouping a run is newline_list's job
 	if (!merge_spaces(chain))
 		return NULL;
 	

@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/14 21:28:31 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/15 04:36:19 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/15 05:32:17 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,6 +58,70 @@ t_astnode *parse_input(t_token *chain)
     return root;
 }
 
+// narrows a span to its first and last newline token
+static void trim_to_newlines(t_token **first, t_token **last)
+{
+    t_token *start = *first;
+    t_token *end = *last;
+
+    while (start && start != end && !is_newline_token(start))
+        start = start->next;
+    if (!start || !is_newline_token(start))
+    {
+        *first = NULL;
+        *last = NULL;
+        return;
+    }
+    while (end != start && !is_newline_token(end))
+        end = end->prev;
+    *first = start;
+    *last = end;
+}
+
+/*
+newline_list
+:              NEWLINE
+| newline_list NEWLINE
+;
+*/
+static t_astnode *parse_newline_list(t_astnode *parent)
+{
+    if (parent == NULL)
+        return NULL;
+    if (!parent->first || !parent->last)
+        return syntax_error(NULL);
+
+    // first and last are both NEWLINE tokens
+    t_token *first = parent->first;
+    t_token *last = parent->last;
+    t_token *prev;
+
+    if (first == last)
+    {
+        LOG_TRACE("parse_newline_list(): assignment 0 [NEWLINE]\n");
+        parent->definition_type = 0;
+        if (!alloc_ast_children(parent, 1))
+            return NULL;
+        parent->nodes[0] = create_ast_node(GRAMMAR_NEWLINE, last, last);
+        if (!parent->nodes[0])
+            return NULL;
+        return parent;
+    }
+
+    LOG_TRACE("parse_newline_list(): assignment 1 [newline_list NEWLINE]\n");
+    prev = last->prev;
+    while (prev != first && !is_newline_token(prev))
+        prev = prev->prev;
+    parent->definition_type = 1;
+    if (!alloc_ast_children(parent, 2))
+        return NULL;
+    parent->nodes[0] = create_ast_node(GRAMMAR_NEWLINE_LIST, first, prev);
+    parent->nodes[1] = create_ast_node(GRAMMAR_NEWLINE, last, last);
+    if (!parent->nodes[0] || !parent->nodes[1])
+        return NULL;
+    return parse_newline_list(parent->nodes[0]);
+}
+
 /*
 linebreak
 : newline_list
@@ -67,26 +131,30 @@ linebreak
 static t_astnode *make_linebreak(t_token *first, t_token *last)
 {
     t_astnode   *node;
-    t_token     *current;
 
-    current = first;
-    while (current && is_space_token(current))
-    {
-        if (current == last)
-        {
-            first = NULL;
-            last = NULL;
-            break;
-        }
-        current = current->next;
-    }
+    trim_to_newlines(&first, &last);
     node = create_ast_node(GRAMMAR_LINEBREAK, first, last);
     if (!node)
         return NULL;
-    if (node->first)
-        node->definition_type = 0;
-    else
+    if (!node->first)
+    {
         node->definition_type = 1;
+        return node;
+    }
+    // the node has no parent yet, so it has to clean up after itself
+    node->definition_type = 0;
+    if (!alloc_ast_children(node, 1))
+    {
+        free_ast_node(node);
+        return NULL;
+    }
+    node->nodes[0] = create_ast_node(GRAMMAR_NEWLINE_LIST, node->first,
+        node->last);
+    if (!node->nodes[0] || !parse_newline_list(node->nodes[0]))
+    {
+        free_ast_node(node);
+        return NULL;
+    }
     return node;
 }
 
@@ -143,6 +211,59 @@ t_astnode *parse_program(t_astnode *parent)
     return parent;
 }
 
+static t_token *prev_nonblank(t_token *first, t_token *token)
+{
+    while (token != first && is_blank_token(token))
+        token = token->prev;
+    if (is_blank_token(token))
+        return NULL;
+    return token;
+}
+
+// to distinct between complete_commands and linebreak following certain other rules
+// this list will grow once we introduce compound commands lol
+static int is_continuation(t_token *first, t_token *nl_start)
+{
+    t_token *prev;
+
+    if (nl_start == first)
+        return 0;
+    prev = prev_nonblank(first, nl_start->prev);
+    if (!prev)
+        return 0;
+    return token_matchstr(prev, "&&") || token_matchstr(prev, "||")
+        || token_matchstr(prev, "|");
+}
+
+// last newline run in (first,last) that actually separates two complete_commands
+static t_token *find_separator_run(t_token *first, t_token *last,
+    t_token **run_start)
+{
+    t_token *end = last;
+    t_token *start;
+
+    while (end)
+    {
+        while (end != first && !is_newline_token(end))
+            end = end->prev;
+        if (!is_newline_token(end))
+            return NULL;
+        start = end;
+        while (start != first && is_blank_token(start->prev))
+            start = start->prev;
+        trim_to_newlines(&start, &end);
+        if (!is_continuation(first, start))
+        {
+            *run_start = start;
+            return end;
+        }
+        if (start == first)
+            return NULL;
+        end = start->prev;
+    }
+    return NULL;
+}
+
 /*
 complete_commands
 : complete_commands newline_list complete_command
@@ -158,15 +279,10 @@ t_astnode *parse_complete_commands(t_astnode *parent)
 
     t_token *first = parent->first;
     t_token *last = parent->last;
-    t_token *current = last;
+    t_token *nl_start = NULL;
+    t_token *nl_end = find_separator_run(first, last, &nl_start);
 
-    while (current && current != first)
-    {
-        if (is_newline_token(current))
-            break;
-        current = current->prev;
-    }
-    if (current == first && !is_newline_token(current))
+    if (!nl_end)
     {
         LOG_TRACE("parse_complete_commands(): assignment 1 [complete_command]\n");
         parent->definition_type = 1;
@@ -178,20 +294,22 @@ t_astnode *parse_complete_commands(t_astnode *parent)
         // parse complete_command
         return parse_complete_command(parent->nodes[0]);
     }
-    if (current == first || current == last)
-        return syntax_error(current);
+    if (nl_start == first || nl_end == last)
+        return syntax_error(nl_start);
 
     LOG_TRACE("parse_complete_commands(): assignment 0 [complete_commands newline_list complete_command]\n");
     parent->definition_type = 0;
     if (!alloc_ast_children(parent, 3))
         return NULL;
-    parent->nodes[0] = create_ast_node(GRAMMAR_COMPLETE_COMMANDS, first, current->prev);
-    parent->nodes[1] = make_linebreak(current, current);
-    parent->nodes[2] = create_ast_node(GRAMMAR_COMPLETE_COMMAND, current->next, last);
+    parent->nodes[0] = create_ast_node(GRAMMAR_COMPLETE_COMMANDS, first, nl_start->prev);
+    parent->nodes[1] = create_ast_node(GRAMMAR_NEWLINE_LIST, nl_start, nl_end);
+    parent->nodes[2] = create_ast_node(GRAMMAR_COMPLETE_COMMAND, nl_end->next, last);
     if (!parent->nodes[0] || !parent->nodes[1] || !parent->nodes[2])
         return NULL;
-    // parse complete_commands and complete_command
+    // parse complete_commands, newline_list and complete_command
     if (!parse_complete_commands(parent->nodes[0]))
+        return NULL;
+    if (!parse_newline_list(parent->nodes[1]))
         return NULL;
     return parse_complete_command(parent->nodes[2]);
 }

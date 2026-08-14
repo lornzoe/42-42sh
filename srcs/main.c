@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/05 05:50:58 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/15 02:18:04 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/15 05:23:52 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,121 +16,55 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <readline/readline.h>
 #include <readline/history.h>
 
 // POSIX reference:
 // https://pubs.opengroup.org/onlinepubs/9799919799/utilities/V3_chap02.html
 
+static void	run_line(char *line)
+{
+	t_token		*chain;
+	t_astnode	*ast_root;
+
+	// 2. The shell breaks the input into tokens: words and operators; see 2.3 Token Recognition.
+	chain = tokeniser(line);
+	// 3. The shell parses the input into simple commands (see 2.9.1 Simple Commands) and compound commands (see 2.9.4 Compound Commands).
+	ast_root = parse_input(chain);
+
+	// for printing out AST tree.
+	LOG_DEBUG_CALL(print_ast(ast_root, 0));
+	// LOG_DEBUG_CALL(print_ast_tree(ast_root));
+
+	// 4. For each word within a command, the shell processes <backslash>-escape sequences inside dollar-single-quotes (see 2.2.4 Dollar-Single-Quotes) and then performs various word expansions (see 2.6 Word Expansions). In the case of a simple command, the results usually include a list of pathnames and fields to be treated as a command name and arguments; see 2.9 Shell Commands.
+	// 5. The shell performs redirection (see 2.7 Redirection) and removes redirection operators and their operands from the parameter list.
+	// 6. The shell executes a function (see 2.9.5 Function Definition Command), built-in (see 2.15 Special Built-In Utilities), executable file, or script, giving the names of the arguments as positional parameters numbered 1 to n, and the name of the command (or in the case of a function within a script, the name of the script) as special parameter 0 (see 2.9.1.4 Command Search and Execution).
+	// 7. The shell optionally waits for the command to complete and collects the exit status (see 2.8.2 Exit Status for Commands).
+
+	free_ast_node(ast_root);
+	free_token_chain(chain);
+}
+
 int	main(int argc, char **argv, char **envp)
 {
 	char	*line;
 
-	(void)argc;
-	(void)argv;
 	(void)envp;
 
-	/* ============================================================
-	 * STEP 1: INPUT SOURCE
-	 * ------------------------------------------------------------
-	 * The shell reads its input from a file (via the sh utility),
-	 * from the -c option, or from the system() and popen()
-	 * functions. Here, readline() reads interactively from stdin,
-	 * one line at a time, in place of the sh utility's file input.
-	 *
-	 * NOTE: If a script file's first line starts with "#!", and
-	 * that file is passed explicitly to sh, results are unspecified.
-	 * ============================================================ */
+	 // -c option: run a single command and exit for testing
+	if (argc >= 3 && strcmp(argv[1], "-c") == 0)
+	{
+		run_line(argv[2]);
+		return (0);
+	}
 	
 	while ((line = readline("42sh$ ")) != NULL)
 	{
 		if (*line)
 		{
 			add_history(line);
-			// following posix's 2.1 general overview of operations:
-			/* ============================================================
-			* STEP 2: TOKENIZATION
-			* ------------------------------------------------------------
-			* The shell breaks raw input into tokens: words and operators.
-			*
-			* Example input:
-			*     grep "error" log.txt > results.txt
-			*
-			* Tokens produced:
-			*     WORD:grep  WORD:"error"  WORD:log.txt  OP:>  WORD:results.txt
-			* ============================================================ */
-			t_token *chain = tokeniser(line);
-
-			/* ============================================================
-			 * STEP 3: PARSING (SIMPLE vs COMPOUND COMMANDS)
-			 * ------------------------------------------------------------
-			 * Tokens are parsed into a command structure:
-			 *   - Simple command:   grep "error" log.txt > results.txt
-			 *   - Compound command: if [ -f x ]; then echo yes; fi
-			 *                        for i in 1 2 3; do echo $i; done
-			 *                        cmd1 | cmd2   (pipeline)
-			 * ============================================================ */
-			t_astnode* ast_root = parse_input(chain);
-			// LOG_DEBUG_CALL(print_ast(ast_root, 0));
-			LOG_DEBUG_CALL(print_ast_tree(ast_root));
-
-			/* ============================================================
-			 * STEP 4: WORD EXPANSIONS
-			 * ------------------------------------------------------------
-			 * Each word undergoes (in order): backslash processing inside
-			 * $'...', tilde expansion, parameter expansion ($var), command
-			 * substitution ($(cmd)), arithmetic expansion ($((expr))),
-			 * field splitting, pathname expansion (globbing), and quote
-			 * removal.
-			 *
-			 * Example:
-			 *     "error"  ->  error        (quotes removed, no globbing)
-			 *     *.txt    ->  log.txt a.txt b.txt   (glob expanded)
-			 * ============================================================ */
-
-			/* ============================================================
-			 * STEP 5: REDIRECTION
-			 * ------------------------------------------------------------
-			 * Redirection operators/operands are processed and then
-			 * stripped from the argument list before the command runs.
-			 *
-			 * Example:
-			 *     grep error log.txt > results.txt
-			 *         -> stdout redirected to results.txt
-			 *         -> argv passed to grep: { "grep", "error", "log.txt" }
-			 *            (">" and "results.txt" never reach grep itself)
-			 * ============================================================ */
-
-			/* ============================================================
-			 * STEP 6: EXECUTION
-			 * ------------------------------------------------------------
-			 * The shell executes a function, special built-in, executable
-			 * file, or script. Arguments become positional parameters
-			 * ($1..$n); the command name becomes $0.
-			 *
-			 * Example:
-			 *     argv[0] = "grep"      // $0
-			 *     argv[1] = "error"     // $1
-			 *     argv[2] = "log.txt"   // $2
-			 * ============================================================ */
-			// execute ast tree
-
-			/* ============================================================
-			 * STEP 7: EXIT STATUS COLLECTION
-			 * ------------------------------------------------------------
-			 * The shell optionally waits for the command to finish and
-			 * collects its exit status into $?.
-			 *
-			 * Example:
-			 *     grep error log.txt > results.txt
-			 *     echo $?        // 0 = match found, 1 = no match, 2 = error
-			 *
-			 * If run in background ("cmd &"), the shell does NOT wait here;
-			 * status can be collected later via wait.
-			 * ============================================================ */
-			// end loop (set return number, idk what else?)
-			free_ast_node(ast_root);
-			free_token_chain(chain);
+			run_line(line);
 		}
 		free(line);
 	}
