@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/07 20:39:41 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/14 21:54:55 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/15 00:33:39 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -229,6 +229,51 @@ static t_token *merge_quotes(t_token *chain)
 	return chain;
 }
 
+static t_token *merge_linebreaks(t_token *chain)
+{
+	t_token *current = chain;
+
+	while (current)
+	{
+		if (strcmp(current->str, "\n") == 0)
+		{
+			LOG_TRACE("merge_linebreaks(): starting at %s\n", current->str);
+			while (current->next
+				&& (strcmp(current->next->str, "\n") == 0 || strcmp(current->next->str, " ") == 0))
+			{
+				LOG_TRACE("merge_linebreaks(): merging [%s] + [%s]\n",
+					current->str, current->next->str);
+				if (!merge_tokens(current, current->next))
+					return NULL;
+			}
+		}
+		current = current->next;
+	}
+	return chain;
+}
+
+static t_token *merge_spaces(t_token *chain)
+{
+	t_token *current = chain;
+
+	while (current)
+	{
+		if (strcmp(current->str, " ") == 0)
+		{
+			LOG_TRACE("merge_spaces(): starting at %s\n", current->str);
+			while (current->next && strcmp(current->next->str, " ") == 0)
+			{
+				LOG_TRACE("merge_spaces(): merging [%s] + [%s]\n",
+					current->str, current->next->str);
+				if (!merge_tokens(current, current->next))
+					return NULL;
+			}
+		}
+		current = current->next;
+	}
+	return chain;
+}
+
 t_token *tokeniser(char *line)
 {
 	t_token		*chain;
@@ -245,6 +290,7 @@ t_token *tokeniser(char *line)
 	LOG_DEBUG_CALL(print_token_chain(chain));
 
 	// combine symbols together where possible so that they are intrepretable later as operators/special words/etc.
+	LOG_INFO("tokeniser(): merging phase\n");
 	if (!merge_operators(chain))
 		return NULL;
 	if (!merge_params(chain))
@@ -252,6 +298,10 @@ t_token *tokeniser(char *line)
 	if (!merge_io_location(chain))
 		return NULL;
 	if (!merge_quotes(chain))
+		return NULL;
+	if (!merge_linebreaks(chain))
+		return NULL;
+	if (!merge_spaces(chain))
 		return NULL;
 	
 	LOG_DEBUG_CALL(print_token_chain(chain));
