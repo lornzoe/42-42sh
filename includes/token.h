@@ -61,6 +61,7 @@ t_token *add_token(const char *str, t_token *end);
 
 char	*get_token_str(t_token *token);
 int		token_strcmp(t_token *token, const char *str);
+int		token_matchstr(t_token *token, const char *str);
 t_token	*split_token(t_token *token, const char delim);
 t_token	*merge_tokens(t_token *first, t_token *second);
 void	free_token(t_token *end);

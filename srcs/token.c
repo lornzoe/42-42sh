@@ -61,6 +61,11 @@ int	token_strcmp(t_token *token, const char *str)
 	return (strcmp(token_str, str));
 }
 
+int	token_matchstr(t_token *token, const char *str)
+{
+	return (token_strcmp(token, str) == 0);
+}
+
 t_token *split_token(t_token *token, const char c)
 {
 	char *str;
