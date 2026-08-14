@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/07 20:39:41 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/14 05:52:57 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/14 21:54:55 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -160,6 +160,41 @@ static t_token *merge_params(t_token *chain)
 	return chain;
 }
 
+static t_token *merge_io_location(t_token *chain)
+{
+	t_token *current = chain;
+	t_token *close;
+	int		is_close;
+
+	while (current)
+	{
+		if (strcmp(current->str, "{") == 0)
+		{
+			close = current->next;
+			while (close && strcmp(close->str, "}") != 0)
+				close = close->next;
+			if (close && close->next
+				&& (close->next->str[0] == '<' || close->next->str[0] == '>'))
+			{
+				LOG_TRACE("merge_io_location(): found valid end node.");
+				LOG_TRACE("merge_io_location(): merging starting at [%s]\n", current->str);
+				while (current->next)
+				{
+					is_close = (current->next == close);
+					LOG_TRACE("merge_io_location(): merging [%s] + [%s]\n",
+						current->str, current->next->str);
+					if (!merge_tokens(current, current->next))
+						return NULL;
+					if (is_close)
+						break;
+				}
+			}
+		}
+		current = current->next;
+	}
+	return chain;
+}
+
 static t_token *merge_quotes(t_token *chain)
 {
 	t_token *current = chain;
@@ -213,6 +248,8 @@ t_token *tokeniser(char *line)
 	if (!merge_operators(chain))
 		return NULL;
 	if (!merge_params(chain))
+		return NULL;
+	if (!merge_io_location(chain))
 		return NULL;
 	if (!merge_quotes(chain))
 		return NULL;
