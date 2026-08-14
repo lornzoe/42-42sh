@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/14 21:28:31 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/15 02:25:32 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/15 03:57:49 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -112,9 +112,210 @@ t_astnode *parse_program(t_astnode *parent)
     if (!parent->nodes[0] || !parent->nodes[1] || !parent->nodes[2])
         return NULL;
 
-    // parse complete_commands before return
+    parse_complete_commands(parent->nodes[1]);
  
     return parent;
 }
 
+/*
+complete_commands
+: complete_commands newline_list complete_command
+|                                complete_command
+;
+*/
+t_astnode *parse_complete_commands(t_astnode *parent)
+{
+    if (parent == NULL)
+        return NULL;
 
+    t_token *first = parent->first;
+    t_token *last = parent->last;
+    t_token *current = last;
+    
+    while (current && current != first)
+    {
+        if (is_newline_token(current))
+            break;
+        current = current->prev;
+    }
+    if (current == first && !is_newline_token(current))
+    {
+        LOG_TRACE("parse_complete_commands(): assignment 1 [complete_command]\n");
+        parent->definition_type = 1;
+        if (!alloc_ast_children(parent, 1))
+            return NULL;
+        parent->nodes[0] = create_ast_node(GRAMMAR_COMPLETE_COMMAND, first, last);
+        if (!parent->nodes[0])
+            return NULL;
+        // parse complete_command
+        parse_complete_command(parent->nodes[0]);
+    }
+    else
+    {
+        LOG_TRACE("parse_complete_commands(): assignment 0 [complete_commands newline_list complete_command]\n");
+        parent->definition_type = 0;
+        if (!alloc_ast_children(parent, 3))
+            return NULL;
+        parent->nodes[0] = create_ast_node(GRAMMAR_COMPLETE_COMMANDS, first, current->prev);
+        parent->nodes[1] = make_linebreak(current, current);
+        parent->nodes[2] = create_ast_node(GRAMMAR_COMPLETE_COMMAND, current->next, last);
+        if (!parent->nodes[0] || !parent->nodes[1] || !parent->nodes[2])
+            return NULL;
+        // parse complete_commands and complete_command
+        parse_complete_commands(parent->nodes[0]);
+        parse_complete_command(parent->nodes[2]);
+    }
+    return parent;
+}
+
+/*
+complete_command
+: list separator_op
+| list
+;*/
+t_astnode *parse_complete_command(t_astnode *parent)
+{
+    if (parent == NULL)
+        return NULL;
+
+    t_token *first = parent->first;
+    t_token *last = parent->last;
+    t_token *current = last;
+    
+    while (current && current != first)
+    {
+        if (token_matchstr(current, ";") || token_matchstr(current, "&"))
+            break;
+        current = current->prev;
+    }
+    if (current == first && !token_matchstr(current, ";") && !token_matchstr(current, "&"))
+    {
+        LOG_TRACE("parse_complete_command(): assignment 1 [list]\n");
+        parent->definition_type = 1;
+        if (!alloc_ast_children(parent, 1))
+            return NULL;
+        parent->nodes[0] = create_ast_node(GRAMMAR_LIST, first, last);
+        if (!parent->nodes[0])
+            return NULL;
+        // parse list
+        parse_list(parent->nodes[0]);
+    }
+    else
+    {
+        LOG_TRACE("parse_complete_command(): assignment 0 [list separator_op]\n");
+        parent->definition_type = 0;
+        if (!alloc_ast_children(parent, 2))
+            return NULL;
+        parent->nodes[0] = create_ast_node(GRAMMAR_LIST, first, current->prev);
+        parent->nodes[1] = create_ast_node(GRAMMAR_SEPARATOR_OP, current, last);
+        if (!parent->nodes[0] || !parent->nodes[1])
+            return NULL;
+        // parse list and separator_op (do not parse separator_op, as it is a leaf node)
+        parse_list(parent->nodes[0]);
+        
+    }
+
+    return parent;
+}
+
+/*
+list
+: list separator_op and_or
+|                   and_or
+;
+*/
+t_astnode *parse_list(t_astnode *parent)
+{
+    if (parent == NULL)
+        return NULL;
+    
+    t_token *first = parent->first;
+    t_token *last = parent->last;
+    t_token *current = first;
+
+    while (current && current != last)
+    {
+        if (token_matchstr(current, ";") || token_matchstr(current, "&"))
+            break;
+        current = current->next;
+    }
+    if (current == last && !token_matchstr(current, ";") && !token_matchstr(current, "&"))
+    {
+        LOG_TRACE("parse_list(): assignment 1 [and_or]\n");
+        parent->definition_type = 1;
+        if (!alloc_ast_children(parent, 1))
+            return NULL;
+        parent->nodes[0] = create_ast_node(GRAMMAR_AND_OR, first, last);
+        if (!parent->nodes[0])
+            return NULL;
+        // parse and_or
+        // parse_and_or(parent->nodes[0]);
+    }
+    else
+    {
+        LOG_TRACE("parse_list(): assignment 0 [list separator_op and_or]\n");
+        parent->definition_type = 0;
+        if (!alloc_ast_children(parent, 3))
+            return NULL;
+        parent->nodes[0] = create_ast_node(GRAMMAR_LIST, first, current->prev);
+        parent->nodes[1] = create_ast_node(GRAMMAR_SEPARATOR_OP, current, current);
+        parent->nodes[2] = create_ast_node(GRAMMAR_AND_OR, current->next, last);
+        if (!parent->nodes[0] || !parent->nodes[1] || !parent->nodes[2])
+            return NULL;
+        // parse list and and_or 
+        parse_list(parent->nodes[0]);
+        // parse_and_or(parent->nodes[2]);
+    }
+    return parent;
+}
+
+/*
+and_or
+:                         pipeline
+| and_or OR_IF  linebreak pipeline
+| and_or AND_IF linebreak pipeline
+*/
+t_astnode *parse_and_or(t_astnode *parent)
+{
+    if (parent == NULL)
+        return NULL;
+
+    t_token *first = parent->first;
+    t_token *last = parent->last;
+    t_token *current = first;
+
+    while (current && current != last)
+    {
+        if (token_matchstr(current, "&&") || token_matchstr(current, "||"))
+            break;
+        current = current->next;
+    }
+    if (current == last && !token_matchstr(current, "&&") && !token_matchstr(current, "||"))
+    {
+        LOG_TRACE("parse_and_or(): assignment 0 [pipeline]\n");
+        parent->definition_type = 0;
+        if (!alloc_ast_children(parent, 1))
+            return NULL;
+        parent->nodes[0] = create_ast_node(GRAMMAR_PIPELINE, first, last);
+        if (!parent->nodes[0])
+            return NULL;
+        // parse pipeline
+        // parse_pipeline(parent->nodes[0]);
+    }
+    else
+    {
+        LOG_TRACE("parse_and_or(): assignment 1/2 [and_or (OR_IF/AND_IF) linebreak pipeline]\n");
+        parent->definition_type = 1;
+        if (!alloc_ast_children(parent, 3))
+            return NULL;
+        parent->nodes[0] = create_ast_node(GRAMMAR_AND_OR, first, current->prev);
+        parent->nodes[1] = create_ast_node(token_matchstr(current, "&&") ? GRAMMMAR_AND_IF : GRAMMAR_OR_IF, current, current);
+        parent->nodes[2] = create_ast_node(GRAMMAR_PIPELINE, current->next, last);
+        if (!parent->nodes[0] || !parent->nodes[1] || !parent->nodes[2])
+            return NULL;
+        // parse and_or and pipeline
+        parse_and_or(parent->nodes[0]);
+        // parse_pipeline(parent->nodes[2]);
+    }
+    return parent;
+}
