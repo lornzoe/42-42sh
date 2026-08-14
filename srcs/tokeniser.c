@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/07 20:39:41 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/15 00:33:39 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/15 02:27:35 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -255,6 +255,7 @@ static t_token *merge_linebreaks(t_token *chain)
 static t_token *merge_spaces(t_token *chain)
 {
 	t_token *current = chain;
+	char	*compressed;
 
 	while (current)
 	{
@@ -267,6 +268,19 @@ static t_token *merge_spaces(t_token *chain)
 					current->str, current->next->str);
 				if (!merge_tokens(current, current->next))
 					return NULL;
+			}
+			if (strlen(current->str) > 1)
+			{
+				LOG_TRACE("merge_spaces(): compressing [%s] to a single space\n",
+					current->str);
+				compressed = strdup(" ");
+				if (!compressed)
+				{
+					LOG_ERROR("merge_spaces(): allocation failed.\n");
+					return NULL;
+				}
+				free(current->str);
+				current->str = compressed;
 			}
 		}
 		current = current->next;
