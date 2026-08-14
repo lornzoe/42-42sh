@@ -48,30 +48,6 @@ static const char *g_grammar_names[] = {
     "end"
 };
 
-static const char *g_token_names[] = {
-    "UNKNOWN",
-    "WORD",
-    "OPERATOR",
-    "REDIR_IN",
-    "REDIR_TRUNC",
-    "REDIR_APPEND",
-    "REDIR_CLOBBER",
-    "REDIR_DUP_IN",
-    "REDIR_DUP_OUT",
-    "HEREDOC",
-    "HEREDOC_STRIP",
-    "REDIR_RDWR",
-    "PIPE",
-    "SEPARATOR",
-    "CASE_END",
-    "LOGICAL_AND",
-    "LOGICAL_OR",
-    "BACKGROUND",
-    "SUBSHELL_OPEN",
-    "SUBSHELL_CLOSE",
-    "NEWLINE"
-};
-
 static const char *grammar_name(t_grammar type)
 {
     if (type < 0 || type > GRAMMAR_END)
@@ -79,11 +55,13 @@ static const char *grammar_name(t_grammar type)
     return g_grammar_names[type];
 }
 
-static const char *token_name(t_tokentype type)
+// tokens no longer carry a type, so operators are recognised from their text;
+// newlines live in that table too, which keeps them out of the blank filler
+static int is_operator_token(t_token *token)
 {
-    if (type < 0 || type > TOKEN_NEWLINE)
-        return "?";
-    return g_token_names[type];
+    if (!token)
+        return 0;
+    return operator_type(token->str) != TOKEN_UNKNOWN;
 }
 
 // [-] blank filler, [X] operator, [O] word: same at-a-glance markers as the
@@ -92,10 +70,10 @@ static const char *token_mark(t_token *token)
 {
     if (!token)
         return "[ ]";
+    if (is_operator_token(token))
+        return "[X]";
     if (is_blank_token(token))
         return "[-]";
-    if (token->type >= TOKEN_OPERATOR)
-        return "[X]";
     return "[O]";
 }
 
@@ -103,10 +81,10 @@ static const char *token_color(t_token *token)
 {
     if (!token)
         return LOG_COLOR_GREY;
+    if (is_operator_token(token))
+        return LOG_COLOR_YELLOW;
     if (is_blank_token(token))
         return LOG_COLOR_GREY;
-    if (token->type >= TOKEN_OPERATOR)
-        return LOG_COLOR_YELLOW;
     return LOG_COLOR_GREEN;
 }
 
@@ -170,7 +148,7 @@ static void print_indent(int levels)
 /* style 1: depth column + rails                                              */
 /* ========================================================================== */
 
-// leaves get their span exploded one token per line, tagged with its type
+// leaves get their span exploded one token per line
 static void print_ast_words(t_astnode *node, int depth)
 {
     t_token *current;
@@ -180,8 +158,8 @@ static void print_ast_words(t_astnode *node, int depth)
     {
         printf("      ");
         print_indent(depth + 1);
-        printf("%s%s %-13s " LOG_COLOR_RESET, token_color(current),
-            token_mark(current), token_name(current->type));
+        printf("%s%s " LOG_COLOR_RESET, token_color(current),
+            token_mark(current));
         print_escaped_str(current->str);
         printf("\n");
         if (current == node->last)
@@ -193,7 +171,9 @@ static void print_ast_words(t_astnode *node, int depth)
 void print_ast(t_astnode *node, int depth)
 {
     int i;
-    printf(LOG_COLOR_CYAN "<<< PRINTING AST TREE >>>" LOG_COLOR_RESET "\n");
+
+    if (depth == 0)
+        printf(LOG_COLOR_CYAN "<PRINTING AST TREE>" LOG_COLOR_RESET "\n");
     printf("%3d   ", depth);
     i = 1;
     while (i++ < depth)
@@ -224,8 +204,8 @@ static void print_tree_words(t_astnode *node, const char *prefix)
     while (current)
     {
         printf(LOG_COLOR_GREY "%s  ╴ " LOG_COLOR_RESET, prefix);
-        printf("%s%s %-13s " LOG_COLOR_RESET, token_color(current),
-            token_mark(current), token_name(current->type));
+        printf("%s%s " LOG_COLOR_RESET, token_color(current),
+            token_mark(current));
         print_escaped_str(current->str);
         printf("\n");
         if (current == node->last)
@@ -279,9 +259,9 @@ static void print_tree_children(t_astnode *node, char *prefix, int len)
 
 void print_ast_tree(t_astnode *node)
 {
-    printf(LOG_COLOR_CYAN "<PRINTING AST TREE>" LOG_COLOR_RESET "\n");
     char    prefix[TREE_PREFIX_MAX];
 
+    printf(LOG_COLOR_CYAN "<PRINTING AST TREE>" LOG_COLOR_RESET "\n");
     prefix[0] = '\0';
     print_node_label(node);
     if (!node)
