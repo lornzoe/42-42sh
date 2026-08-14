@@ -6,7 +6,7 @@
 #    By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/08/05 18:24:23 by lyanga            #+#    #+#              #
-#    Updated: 2026/08/08 18:18:01 by lyanga           ###   ########.fr        #
+#    Updated: 2026/08/15 02:09:30 by lyanga           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -22,7 +22,10 @@ LIBFT_HEADERS	= $(LIBFT_DIR)/headers
 
 SRCS_FILES	=	main.c \
 				tokeniser.c \
-				token.c
+				token.c \
+				ast.c \
+				ast_print.c \
+				parser.c
 
 SRCS		= $(addprefix $(SRCS_DIR)/, $(SRCS_FILES))
 

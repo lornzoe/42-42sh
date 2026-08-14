@@ -6,11 +6,13 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/05 05:50:58 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/10 08:09:24 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/15 02:18:04 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "42sh.h"
+#include "ast.h"
+#include "parser.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -68,7 +70,9 @@ int	main(int argc, char **argv, char **envp)
 			 *                        for i in 1 2 3; do echo $i; done
 			 *                        cmd1 | cmd2   (pipeline)
 			 * ============================================================ */
-			// build ast tree
+			t_astnode* ast_root = parse_input(chain);
+			// LOG_DEBUG_CALL(print_ast(ast_root, 0));
+			LOG_DEBUG_CALL(print_ast_tree(ast_root));
 
 			/* ============================================================
 			 * STEP 4: WORD EXPANSIONS
@@ -125,6 +129,7 @@ int	main(int argc, char **argv, char **envp)
 			 * status can be collected later via wait.
 			 * ============================================================ */
 			// end loop (set return number, idk what else?)
+			free_ast_node(ast_root);
 			free_token_chain(chain);
 		}
 		free(line);
